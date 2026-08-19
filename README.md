@@ -1,38 +1,49 @@
 # ZCTA boundaries
 
-US Census ZIP Code Tabulation Area (ZCTA) polygons as GeoJSON, published as static
-files so mapping tools can load boundaries from a URL.
+US Census ZIP Code Tabulation Area (ZCTA) polygons, published as static files so
+mapping tools can load boundaries from a URL.
 
-Each file is a `FeatureCollection` of `MultiPolygon` features carrying a single
-property:
+## National files — start here
 
-| Property | Meaning |
-|---|---|
-| `ZCTA5CE10` | 5-digit ZCTA code — the join key |
+| File | Format | Features | Size | Property |
+|---|---|---|---|---|
+| `usa_zcta.topojson` | TopoJSON | 33,791 | 8.4 MB | `ZCTA5CE20` |
+| `usa_zcta.geojson` | GeoJSON | 33,791 | 9.4 MB | `ZCTA5CE20` |
 
-## Why subsets
+Both cover every ZCTA in the United States, so nothing needs to be selected ahead
+of time — a map can colour whichever ZIPs its data happens to contain, anywhere in
+the country.
 
-Whole-state ZCTA files run 20–77 MB. Several mapping tools cap a remote boundary
-file at 10 MB, so each file here covers only a working set of ZIPs rather than a
-whole state. Coordinates are rounded to 5 decimal places (~1 m) and vertices
-thinned at a ~56 m tolerance, which keeps roughly 400–900 vertices per ZIP.
+Prefer the **TopoJSON**. It carries meaningfully more shape detail for less bytes,
+because shared borders between neighbouring ZIPs are stored once instead of twice.
+The GeoJSON is the same source simplified much harder to squeeze under a 10 MB
+ceiling, and exists only for tools that can't parse TopoJSON.
 
-Thinning is distance-based rather than Douglas–Peucker: these rings are closed
-(first point == last), which makes the RDP baseline degenerate and collapses
-every ring to two points.
+Source: [Census cartographic boundary file](https://www2.census.gov/geo/tiger/GENZ2020/shp/cb_2020_us_zcta520_500k.zip)
+`cb_2020_us_zcta520_500k` (2020 vintage, 1:500,000), simplified with
+[mapshaper](https://github.com/mbloch/mapshaper). Public domain (US Government work).
 
-## Source
+## Per-metro subsets
 
-Derived from the 2010 Census ZCTA boundaries published at
-[OpenDataDE/State-zip-code-GeoJSON](https://github.com/OpenDataDE/State-zip-code-GeoJSON).
-Public domain (US Government work).
+The `zips_<id>.geojson` files are working-set subsets built from the older 2010
+ZCTA release, carrying the property `ZCTA5CE10`. The national files supersede them
+— they cover more ZIPs (one subset went from 709 to 1,347 matched) and need no
+curation. Kept for reference only.
+
+## Why size matters
+
+Whole-state 2010 ZCTA files run 20–77 MB and several mapping tools cap a remote
+boundary file at 10 MB, which is what drove both the subsetting and the
+simplification levels chosen here.
 
 ## Usage
 
-Files are served directly over HTTPS:
+Files are served directly over HTTPS, with no redirects, so tools that refuse to
+follow redirects resolve them fine:
 
 ```
-https://raw.githubusercontent.com/krunkled/zcta-boundaries/main/zips_<id>.geojson
+https://raw.githubusercontent.com/krunkled/zcta-boundaries/main/usa_zcta.topojson
+https://raw.githubusercontent.com/krunkled/zcta-boundaries/main/usa_zcta.geojson
 ```
 
-No redirects, so tools that refuse to follow them resolve these fine.
+Join your data to the `ZCTA5CE20` property (5-digit ZIP as a string, zero-padded).
